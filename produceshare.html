@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+* {box-sizing: border-box}
+
+/* Set height of body and the document to 100% */
+body, html {
+  height: 100%;
+  margin: 0;
+  font-family: Arial;
+}
+
+/* Style tab links */
+.tablink {
+  background-color: #555;
+  color: white;
+  float: left;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 14px 16px;
+  font-size: 17px;
+  width: 33.33%;
+}
+
+.tablink:hover {
+  background-color: #777;
+}
+
+/* Style the tab content (and add height:100% for full page content) */
+.tabcontent {
+  color: white;
+  display: none;
+  padding: 100px 20px;
+  height: 100%;
+}
+
+#Home {background-color: red;}
+#Train {background-color: blue;}
+#Delete {background-color: orange;}
+</style>
+</head>
+<body>
+
+<button class="tablink" onclick="openPage('Home', this, 'red')" id="defaultOpen">Home</button>
+<button class="tablink" onclick="openPage('Train', this, 'blue')">Train</button>
+<button class="tablink" onclick="openPage('Delete', this, 'orange')">Delete</button>
+
+<div id="Home" class="tabcontent">
+  <h3>Home</h3>
+  <div id="my-login-button-target"></div>
+  <div id="container">
+    <div id="login-button"></div>
+    <div id="profile" class="hidden">
+      <img id="picture" src="" />
+      <p id="welcome">Welcome!</p>
+    </div>
+  </div>
+  <script>
+     window.snapKitInit = function () {
+      var loginButtonIconId = 'my-login-button-target';
+      // Mount Login Button
+      snap.loginkit.mountButton(loginButtonIconId, {
+        clientId: '12178769-2f25-4381-b635-a81e6808bfb9',
+        redirectURI: 'http://localhost/produceshare.html',
+        scopeList: [
+          'user.display_name',
+          'user.bitmoji.avatar',
+        ],
+        handleResponseCallback: function() {
+          snap.loginkit.fetchUserInfo().then(data => {
+            document.getElementById("login-button").classList.add("hidden")
+            document.getElementById("profile").classList.remove("hidden")
+
+            document.getElementById("picture").src = data["data"]["me"]["bitmoji"]["avatar"]
+            document.getElementById("welcome").innerHTML = "Welcome, " + data["data"]["me"]["displayName"] + "!"
+          })
+        },
+      });
+    };
+
+    // Load the SDK asynchronously
+    (function (d, s, id) {
+      var js, sjs = d.getElementsByTagName(s)[0];
+      if (d.getElementById(id)) return;
+      js = d.createElement(s); js.id = id;
+      js.src = "https://sdk.snapkit.com/js/v1/login.js";
+      sjs.parentNode.insertBefore(js, sjs);
+    }(document, 'script', 'loginkit-sdk'));
+
+    var loginButtonIconId = 'my-login-button-target';
+    var loginParamsObj = {
+      // Override this parameter `handleAuthGrantFlowCallback`
+      handleAuthGrantFlowCallback:
+      function handleAuthGrantFlowCallback(){
+        // TO START THE OAUTH2.0 AUTHORIZATION
+        // GRANT FLOW, POINT THIS CALLBACK TO
+        // YOUR APPLICATION’S BACKEND HANDLER
+      },
+      clientId: '12178769-2f25-4381-b635-a81e6808bfb9',
+    };
+
+    // ******************** Crypto Library Helper ***************************
+    var _crypto = require('crypto');
+
+    var OAUTH2_STATE_BYTES = 32;
+    var REGEX_PLUS_SIGN = /\+/g;
+    var REGEX_FORWARD_SLASH = /\//g;
+    var REGEX_EQUALS_SIGN = /=/g;
+
+    /*
+     * This function generates a random amount of bytes using the
+     * crypto library
+     *
+     * @param {int} size - The number of random bytes to generate.
+     *
+     * @returns {Buffer} The generated number of bytes
+     */
+    var generateRandomBytes = function generateRandomBytes(size) {
+      return _crypto.randomBytes(size);
+    };
+
+    /*
+     * This function encodes the given byte buffer into a base64 URL
+     * safe string.
+     *
+     * @param {Buffer} bytesToEncode - The bytes to encode
+     *
+     * @returns {string} The URL safe base64 encoded string
+     */
+    var generateBase64UrlEncodedString = function generateBase64UrlEncodedString(bytesToEncode) {
+      return bytesToEncode
+        .toString('base64')
+        .replace(REGEX_PLUS_SIGN, '-')
+        .replace(REGEX_FORWARD_SLASH, '_')
+        .replace(REGEX_EQUALS_SIGN, '');
+    };
+
+    /*
+     * This function generates the state required for both the
+     * OAuth2.0 Authorization and Implicit grant flow
+     *
+     * @returns {string} The URL safe base64 encoded string
+     */
+    var generateClientState = exports.generateClientState = function generateClientState() {
+      return generateBase64UrlEncodedString(
+        generateRandomBytes(OAUTH2_STATE_BYTES)
+      );
+    };
+
+    // ******************** URL Builder Helper ***********************
+    var _qs = require('qs'); // Will need to 'npm install qs'
+
+    var getAuthCodeRedirectURL = function getAuthCodeRedirectURL(clientId, redirectUri, scopeList, state) {
+    var SNAP_ACCOUNTS_LOGIN_URL = 'https://accounts.snapchat.com/accounts/oauth2/auth';
+    var scope = scopeList.join(' ');
+    var loginQS = {
+      client_id: clientId,
+      redirect_uri: redirectUri,
+      response_type: 'code',
+      scope: scope,
+      state: state
+    };
+
+    var stringifyLoginQS = _qs.stringify(loginQS);
+      return SNAP_ACCOUNTS_LOGIN_URL + '?' + stringifyLoginQS;
+    };
+
+    // ******************** ExpressJS Server Main Logic ************************
+    var express = require('express'); // Will need to 'npm install express'
+    var request = require('request'); // Will need to 'npm install request'
+
+    var app = express();
+
+    var clientId = '12178769-2f25-4381-b635-a81e6808bfb9';
+    var clientSecret = 'WN8Ew1QgKu2OjcUa1f4RuqohY0DlgCuws8ayRIBQVcw';
+
+    var redirectUri = 'https://my-redirect-uri.com';
+    var scopeList = ['https://auth.snapchat.com/oauth2/api/example.abc', 'https://auth.snapchat.com/oauth2/api/example.xyz'];
+
+    app.get('/send-oauth-GET-request-step-two', function(req, res){
+       // ..
+    });
+
+    app.get('/send-access-token-POST-request-step-five', function(req, res) {
+      // ..
+    });
+
+    app.get('/send-refresh-token-POST-request-step-six', function(req, res) {
+      // ..
+    });
+
+    app.get('/send-revoke-token-POST-request-step-seven', function(req, res) {
+      var SNAPCHAT_AUTH_REVOKE_ENDPOINT = 'https://accounts.snapchat.com/accounts/oauth2/revoke';
+
+      var authorizationHeader = clientId + ':' + clientSecret;
+      var authorizationHeaderBase64 = Buffer.from(authorizationHeader).toString('base64');
+
+      // Set headers
+      var headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': 'Basic ' + authorizationHeaderBase64,
+      }
+
+      // configure refresh token POST request
+      var options = {
+        url: SNAPCHAT_AUTH_REVOKE_ENDPOINT,
+        method: 'POST',
+        headers: headers,
+        form:{
+          token: refresh_token, // refresh_token is value from step six
+        }
+      };
+
+      // Start POST request
+      request(options, function (error, response, body) {
+          // Clear access_token, refresh_token, and expires_in values
+          res.send(response)
+      })
+    });
+
+    app.listen(3000);
+
+    // MySQL
+    var mysql = require('mysql');
+  </script>
+</div>
+
+<div id="Train" class="tabcontent">
+  <button type="button">Live Train</button>
+  <button type="button">Upload</button>
+</div>
+
+<div id="Delete" class="tabcontent">
+  <table style="width:100%">
+    <tr>
+      <th><img src="spinach.png" alt="produceshare"></th>
+      <th><img src="spinach.png" alt="produceshare"></th>
+      <th><img src="spinach.png" alt="produceshare"></th>
+    </tr>
+    <tr>
+      <td>name1</td>
+      <td>name2</td>
+      <td>name3</td>
+    </tr>
+    <tr>
+      <td><button class="delete-button" onclick="">Delete</button></td>
+      <td><button class="delete-button" onclick="">Delete</button></td>
+      <td><button class="delete-button" onclick="">Delete</button></td>
+    </tr>
+  </table>
+</div>
+
+<script>
+function openPage(pageName,elmnt,color) {
+  var i, tabcontent, tablinks;
+  tabcontent = document.getElementsByClassName("tabcontent");
+  for (i = 0; i < tabcontent.length; i++) {
+    tabcontent[i].style.display = "none";
+  }
+  tablinks = document.getElementsByClassName("tablink");
+  for (i = 0; i < tablinks.length; i++) {
+    tablinks[i].style.backgroundColor = "";
+  }
+  document.getElementById(pageName).style.display = "block";
+  elmnt.style.backgroundColor = color;
+}
+
+// Get the element with id="defaultOpen" and click on it
+document.getElementById("defaultOpen").click();
+</script>
+
+</body>
+</html>
