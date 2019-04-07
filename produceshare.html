@@ -56,10 +56,23 @@ body, html {
     <div id="profile" class="hidden">
       <img id="picture" src="" />
       <p id="welcome">Welcome!</p>
+      <form method="get">
+        First name: <input type="text" name="firstName" id="firstName"><br>
+        Last name: <input type="text" name="lastName" id="lastName"><br>
+        <input type="button" value="ubmit" onClick="writeValues(form)">
+      </form>
+      <p id="fullName"></p>
     </div>
   </div>
   <script>
-     window.snapKitInit = function () {
+    window.writeValues = function(form) {
+      var fname = form.firstName.value;
+      var lname = form.lastName.value;
+
+      document.getElementById('fullName').innerHTML = fname + ' ' + lname;
+    }
+
+    window.snapKitInit = function () {
       var loginButtonIconId = 'my-login-button-target';
       // Mount Login Button
       snap.loginkit.mountButton(loginButtonIconId, {
