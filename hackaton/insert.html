@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+		<meta charset="UTF-8">
+        <link rel="stylesheet" href="SiteStyles.css">
+        <script 
+            src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" 
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" 
+            crossorigin="anonymous">
+        </script>
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyB1qkv_wC_BigqyivKL1N9IovazRZzr2lg"> </script>
+	<title>Document</title>
+</head>
+<body>
+    
+        <h1 ><a href = "Front.html"><img src="Logo.png" alt="logo" width="50" height="50"></a>ShareStalk</h1>
+        <br><br>
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <form method="POST" action="insert.php" enctype="multipart/form-data">
+                      <div class="form-group">
+                        <label for="exampleInputEmail1">Your Name</label>
+                        <input type="text" class="form-control" name="name" id="exampleInputEmail1" aria-describedby="emailHelp" placeholder="Your name">
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputPassword1">Location</label>
+                        <input type="text" class="form-control" name="location" class="location" id="exampleInputPassword1" placeholder="Location">
+                      </div>
+                      <div class="form-group">
+                        <label for="exampleInputPassword1">Contact Number</label>
+                        <input type="number" class="form-control" name="number" id="exampleInputPassword1" placeholder="Number">
+                      </div>
+                       <div class="form-group">
+                                    <input type="file" class="imagem" name="service_1" class="file-input" data-browse-class="btn btn-primary btn-block" data-show-remove="true" data-show-caption="true" data-show-upload="false" data-fouc>
+                            </div>
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+                </div>
+            </div>
+          </div>
+</body>
+</html>
+
+<script>
+	     var map, infoWindow;
+     var user_geolocation = {
+        lat: null,
+        lng: null
+     };
+     var geoCoder, city;
+     function intialize_geoCoder()
+     {
+        geoCoder = new google.maps.Geocoder;
+     }
+     function defaultGeoLocation()
+     {
+        user_geolocation.lat = 37.7822705;
+        user_geolocation.lng = -122.3911401;
+     }
+     function getCity(location)
+     {
+        if(location)
+        {
+            for(var i = 0; i < location.address_components.length; i++)
+            {
+              for(var j = 0; j < location.address_components[i].types.length; j++)
+              {
+                 if(location.address_components[i].types[j] == "locality")
+                  {
+                      city = location.address_components[i].long_name;
+                      var location_input = document.querySelector(".location");
+        			  location_input.value = city;
+                      return;
+                  }
+                  if(location.address_components[i].types[j] == "administrative_area_level_1")
+                      city = location.address_components[i].long_name;
+              }
+            }
+        }
+        else
+            city = "San Francisco";
+        var location_input = document.querySelector(".location");
+        location_input.value = city;
+     }
+   $( document ).ready(function() {
+          /* voltar pra resolver um bug, se nao aceitar colocar vazio */
+          var result;
+          navigator.geolocation.getCurrentPosition(function(location) {
+          user_geolocation.lat = location.coords.latitude;
+          user_geolocation.lng = location.coords.longitude;
+          //user_geolocation.lat = -23.000372;
+          //user_geolocation.lng = -43.365894;
+          intialize_geoCoder();
+          if(user_geolocation.lat)
+          {
+              geoCoder.geocode({'location': user_geolocation}, function(results, status) {
+                  if(status != google.maps.GeocoderStatus.OK)
+                      result = false;
+                  else
+                    result = results[0];
+                  getCity(result);
+              });
+          }
+          else 
+              getCity(false);
+        });
+      });
+  </script>
